@@ -1,0 +1,64 @@
+\documentclass{ctexart}
+\setCJKmainfont{BabelStone Han}
+\usepackage{CJKutf8}
+\renewcommand{\figurename}{圖}
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{minted}
+\usepackage{booktabs}
+\usepackage[a4paper, margin=1.5cm]{geometry}
+\begin{document}
+\pagestyle{headings}
+\title{系統程式 作業02}
+\author{409410005 鍾天睿}
+\date{March 09 2021}
+\maketitle
+\clearpage
+
+\section{系統環境}
+\begin{center}
+\begin{tabular}{ l l } 
+\hline
+發行版 & Arch Linux  \\
+\hline
+Linux Kernel & 5.10.16-arch1-1  \\
+\hline
+GCC 版本 & 10.2.0 \\
+\hline
+Clang 版本 & 11.1.0 \\
+\hline
+GDB 版本 & 10.1 \\
+\hline
+CPU & Intel i7-10510U \\
+\hline
+硬碟 & Samsung PM981 M.2 512 GB PCI Express 3.0 NVMe \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{程式說明}
+\subsection{安裝 \& 執行}
+輸入指令 \mintinline{bash}{make run} 以編譯及執行自動測試。
+\section{實作 File Copy}
+在實驗中，測試的目標為利用 hole.c 所生成的帶有 file hole 的檔案測試複製程式。檔案磁碟大小約為 97G，實際大小約為3.8G。程式原始碼在附件資料夾中。
+程式執行時間將利用 \mintinline{bash}{time} 測試，並利用 \mintinline{bash}{cmp} 確認檔案內容相同。
+\subsection{將讀取檔案讀入 Buffer}
+這個章節的實驗將檔案用 \mintinline{c}{read} 讀入 buffer 後再利用 \mintinline{c}{write} 寫入欲寫入的檔案。
+\subsection{利用 mmap 映射，並使用 memcpy 複製}
+這個章節的實驗將檔案用 \mintinline{c}{mmap} 將檔案內容映射至虛擬位址空間，並使用 \mintinline{c}{memcpy} 複製。
+\subsection{實驗結果}
+\begin{center}
+\begin{tabular}{ l l l l l} 
+實驗項目                    & 編譯器    & real (sec)        & user (sec)    & sys (sec)             \\
+\toprule
+read \& write with buffer   & gcc       & 6.984             & 0.088             & 4.091             \\
+                            & clang     & 3.871             & 0.058             & 2.979             \\
+\hline
+mmap \& memcpy              & gcc       & 4.593             & \textbf{0.462}    & \textbf{2.289}    \\
+                            & clang     & \textbf{2.950}    & 0.546             & 2.304             \\
+\hline
+\end{tabular}
+\end{center}
+\section{結論}
+在本次實驗中發現，使用 \mintinline{c}{mmap} 來實作 file copy 具有比較好的執行時間。
+\end{document}
