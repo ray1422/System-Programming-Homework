@@ -15,10 +15,6 @@ void alrm_handler() {
 }
 int main() {
     pid_t pid = fork();
-    if (pid == 0) { 
-    } else {
-        nice(-5);
-    }
     cpu_set_t mask;  //CPU核的集合
     cpu_set_t get;   //获取在集合中的CPU
     CPU_ZERO(&mask);    //置空
@@ -26,6 +22,11 @@ int main() {
     if(sched_setaffinity(0, sizeof(mask), &mask)) {
         perror("CPU 親和力設定失敗");
         abort();
+    }
+
+    if (pid == 0) { 
+        nice(-5);
+    } else {
     }
 
     int l = 0;
