@@ -1,13 +1,19 @@
 #include <pthread.h>
 #include <signal.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-sig_atomic_t stop = 0;
+static volatile sig_atomic_t stop = 0;
+static volatile sig_atomic_t flush = 0;
 
-int int_handler(int sig) {
+void stop_handler(int sig) {
+    printf("stop!\n");
     stop = 1;
+}
+void flush_handler(int sig) {
+    flush = 1;
 }
 
 const int SYNC_FREQ = 100000;
@@ -21,6 +27,7 @@ struct Param {
 
 void *job(void *param_) {
     struct Param *param = param_;
+
     unsigned long long lastN = 0;
     unsigned long long cir = 0;
     struct drand48_data dr_buf;
@@ -30,7 +37,7 @@ void *job(void *param_) {
         drand48_r(&dr_buf, &x);
         drand48_r(&dr_buf, &y);
         if (x * x + y * y < 1.) ++cir;
-        if (i % SYNC_FREQ == 0 || i ==  param->n - 1) {
+        if (i % SYNC_FREQ == 0 || i == param->n - 1) {
             pthread_mutex_lock(param->lock);
             *(param->total) += i - lastN + 1;
             *(param->inCir) += cir;
@@ -40,17 +47,18 @@ void *job(void *param_) {
             cir = 0;
         }
     }
+    return NULL;
 }
 
 int main(int argc, char *argv[]) {
     int nt = 0;
-	unsigned long long target = (unsigned long long) 1 << 35;
+    unsigned long long target = (unsigned long long)1 << 35;
     if (argc >= 2) {
         nt = atoi(argv[1]);
     }
-	if (argc >= 3) {
-		sscanf(argv[2], "%llu", &target);
-	}
+    if (argc >= 3) {
+        sscanf(argv[2], "%llu", &target);
+    }
 
     if (nt <= 0 || nt > 1000) {
         nt = 4;
@@ -65,17 +73,29 @@ int main(int argc, char *argv[]) {
         .inCir = &inCircle,
         .total = &total,
         .n = target / nt,
-        .lock = &lock
-    };
+        .lock = &lock};
     for (int i = 0; i < nt; i++) {
         pthread_create(threads + i, NULL, job, (void *)&attr);
     }
-    
+    signal(SIGINT, flush_handler);
     while (!stop && total < target) {
-        sleep(3);
-        const long double PI = (long double)inCircle * 4 / (long double)total;
-        printf("PI: %2.9Lf\n", PI);
-        printf("%018llu\n%018llu\n", total, target);
+        if (flush) {
+            const long double PI = (long double)inCircle * 4 / (long double)total;
+            printf("\nPI: %2.9Lf\n", PI);
+            printf("%018llu\n%018llu\n", total, target);
+            fflush(stdout);
+            signal(SIGINT, stop_handler);
+            flush = 0;
+            sleep(1);
+            signal(SIGINT, flush_handler);
+        }
+    }
+    const long double PI = (long double)inCircle * 4 / (long double)total;
+    printf("\nPI: %2.9Lf\n", PI);
+    printf("%018llu\n%018llu\n", total, target);
+
+    if (stop) {
+        exit(0);
     }
     for (int i = 0; i < nt; i++) {
         pthread_join(threads[i], NULL);
