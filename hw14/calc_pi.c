@@ -79,6 +79,7 @@ int main(int argc, char *argv[]) {
     }
     signal(SIGINT, flush_handler);
     while (!stop && total < target) {
+        // printf("%lld %lld\n", total, target);
         if (flush) {
             const long double PI = (long double)inCircle * 4 / (long double)total;
             printf("\nPI: %2.9Lf\n", PI);
