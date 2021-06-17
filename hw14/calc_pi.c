@@ -44,15 +44,20 @@ void *job(void *param_) {
 
 int main(int argc, char *argv[]) {
     int nt = 0;
-    if (argc == 2) {
+	unsigned long long target = (unsigned long long) 1 << 35;
+    if (argc >= 2) {
         nt = atoi(argv[1]);
     }
+	if (argc >= 3) {
+		sscanf(argv[2], "%llu", &target);
+	}
+
     if (nt <= 0 || nt > 1000) {
         nt = 4;
     }
     printf("threads: %d\n", nt);
     pthread_t threads[1024];
-    unsigned long long inCircle = 0, total = 0, target = (unsigned long long)1 << 35;
+    unsigned long long inCircle = 0, total = 0;
     target = target * nt / nt;
     pthread_mutex_t lock;
     pthread_mutex_init(&lock, NULL);
