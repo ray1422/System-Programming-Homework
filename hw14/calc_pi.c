@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
     printf("threads: %d\n", nt);
     pthread_t threads[1024];
     unsigned long long inCircle = 0, total = 0;
-    target = target * nt / nt;
+    target = target / nt * nt;
     pthread_mutex_t lock;
     pthread_mutex_init(&lock, NULL);
     struct Param attr = {
