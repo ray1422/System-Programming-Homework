@@ -19,7 +19,7 @@ void flush_handler(int sig) {
 const int SYNC_FREQ = 100000;
 
 struct Param {
-    pthread_mutex_t *lock;
+    // pthread_mutex_t *lock;
     atomic_uint_least64_t n;
     atomic_uint_least64_t *total;
     atomic_uint_least64_t *inCir;
@@ -38,11 +38,11 @@ void *job(void *param_) {
         drand48_r(&dr_buf, &y);
         if (x * x + y * y < 1.) ++cir;
         if (i % SYNC_FREQ == 0 || i == param->n - 1) {
-            pthread_mutex_lock(param->lock);
-            *(param->total) += i - lastN + 1;
-            *(param->inCir) += cir;
+            // pthread_mutex_lock(param->lock);
+            atomic_fetch_add((param->total), i - lastN + 1);
+            atomic_fetch_add((param->inCir), cir);
             // printf("%llu\n", *(param->total));
-            pthread_mutex_unlock(param->lock);
+            // pthread_mutex_unlock(param->lock);
             lastN = i + 1;
             cir = 0;
         }
@@ -67,13 +67,13 @@ int main(int argc, char *argv[]) {
     pthread_t threads[1024];
     atomic_uint_least64_t inCircle = 0, total = 0;
     target = target / nt * nt;
-    pthread_mutex_t lock;
-    pthread_mutex_init(&lock, NULL);
+    // pthread_mutex_t lock;
+    // pthread_mutex_init(&lock, NULL);
     struct Param attr = {
         .inCir = &inCircle,
         .total = &total,
-        .n = target / nt,
-        .lock = &lock};
+        .n = target / nt};
+        // .lock = &lock};
     for (int i = 0; i < nt; i++) {
         pthread_create(threads + i, NULL, job, (void *)&attr);
     }
