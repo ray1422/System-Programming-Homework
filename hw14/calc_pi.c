@@ -20,16 +20,16 @@ const int SYNC_FREQ = 100000;
 
 struct Param {
     pthread_mutex_t *lock;
-    unsigned long long n;
-    unsigned long long *total;
-    unsigned long long *inCir;
+    atomic_uint_least64_t n;
+    atomic_uint_least64_t *total;
+    atomic_uint_least64_t *inCir;
 };
 
 void *job(void *param_) {
     struct Param *param = param_;
 
-    unsigned long long lastN = 0;
-    unsigned long long cir = 0;
+    atomic_uint_least64_t lastN = 0;
+    atomic_uint_least64_t cir = 0;
     struct drand48_data dr_buf;
     srand48_r((long int)&cir, &dr_buf);
     for (unsigned long long i = 0; i < param->n; i++) {
@@ -52,12 +52,12 @@ void *job(void *param_) {
 
 int main(int argc, char *argv[]) {
     int nt = 0;
-    unsigned long long target = (unsigned long long)1 << 35;
+    atomic_uint_least64_t target = (atomic_uint_least64_t)1 << 35;
     if (argc >= 2) {
         nt = atoi(argv[1]);
     }
     if (argc >= 3) {
-        sscanf(argv[2], "%llu", &target);
+        sscanf(argv[2], "%lu", &target);
     }
 
     if (nt <= 0 || nt > 1000) {
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
     }
     printf("threads: %d\n", nt);
     pthread_t threads[1024];
-    unsigned long long inCircle = 0, total = 0;
+    atomic_uint_least64_t inCircle = 0, total = 0;
     target = target / nt * nt;
     pthread_mutex_t lock;
     pthread_mutex_init(&lock, NULL);
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
         if (flush) {
             const long double PI = (long double)inCircle * 4 / (long double)total;
             printf("\nPI: %2.9Lf\n", PI);
-            printf("%018llu\n%018llu\n", total, target);
+            printf("%018lu\n%018lu\n", total, target);
             fflush(stdout);
             signal(SIGINT, stop_handler);
             flush = 0;
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
     }
     const long double PI = (long double)inCircle * 4 / (long double)total;
     printf("\nPI: %2.9Lf\n", PI);
-    printf("%018llu\n%018llu\n", total, target);
+    printf("%018lu\n%018lu\n", total, target);
 
     if (stop) {
         exit(0);
