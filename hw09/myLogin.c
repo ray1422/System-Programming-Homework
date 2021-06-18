@@ -42,6 +42,7 @@ int main(int argc, char *argv[]) {
             return 0;
         }
         int flg = 0;
+        uid_t uid = 0;
         if (buf[strlen(buf)-1] == '\n') buf[strlen(buf) - 1] = '\0';
         struct passwd* u; 
         while ((u = getpwent()) != nil) {
@@ -50,6 +51,7 @@ int main(int argc, char *argv[]) {
                 char* pass = getpass("password: ");
                 if (pass == nil) break;
                 if (passwd_chk(buf, pass) == 0) {
+                    uid = u->pw_uid;
                     flg = 1;
                     break;
                 } else {
@@ -67,6 +69,7 @@ int main(int argc, char *argv[]) {
         }
         pid_t pid = fork();
         if (pid == 0) { // child
+            setuid(uid);
             printf("Hello, %s\n", buf);
             char* BASH = "bash";
             char* my_args[2] = {BASH, nil};
