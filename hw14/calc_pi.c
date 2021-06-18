@@ -54,10 +54,10 @@ int main(int argc, char *argv[]) {
     int nt = 0;
     atomic_uint_least64_t target = (atomic_uint_least64_t)1 << 35;
     if (argc >= 2) {
-        nt = atoi(argv[1]);
+        nt = atoi(argv[2]);
     }
     if (argc >= 3) {
-        sscanf(argv[2], "%lu", &target);
+        sscanf(argv[1], "%lu", &target);
     }
 
     if (nt <= 0 || nt > 1000) {
